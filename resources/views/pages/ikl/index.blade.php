@@ -7,13 +7,37 @@
 {{-- Bagian untuk konten utama --}}
 @section('content')
 <div class="container-fluid">
+    
+    {{-- DITAMBAHKAN: Filter berdasarkan ruangan untuk user experience yang lebih baik --}}
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form action="{{ route('lengkongsari.ikl.index') }}" method="GET">
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <label for="rkl_id_filter">Filter Berdasarkan Ruangan:</label>
+                        <select name="rkl_id" id="rkl_id_filter" class="form-control">
+                            <option value="">Tampilkan Semua</option>
+                            @foreach ($rkls as $rkl)
+                                {{-- Gunakan request()->get('rkl_id') untuk mempertahankan filter yang dipilih --}}
+                                <option value="{{ $rkl->id }}" {{ request()->get('rkl_id') == $rkl->id ? 'selected' : '' }}>
+                                    {{ $rkl->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card shadow mb-4">
         <div class="card-header py-3">
             <div class="d-flex justify-content-between align-items-center">
-                {{-- Judul dinamis disesuaikan untuk IKL Lengkongsari --}}
                 <h4 class="m-0 font-weight-bold text-primary">Data IKL {{ $selectedRkl->name ?? '' }} - Kel. Lengkongsari</h4>
                 <div>
-                    {{-- Tombol disesuaikan dengan route untuk IKL Lengkongsari --}}
                     <a href="{{ route('lengkongsari.ikl.print', request()->query()) }}" class="btn btn-danger btn-icon-split btn-sm">
                         <span class="icon text-white-50"><i class="fas fa-file-pdf"></i></span>
                         <span class="text">Export PDF</span>
@@ -27,6 +51,11 @@
         </div>
         <div class="card-body">
             
+            {{-- DITAMBAHKAN: Menampilkan pesan sukses setelah operasi CRUD --}}
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+
             <div class="table-responsive">
                 <table class="table table-bordered" width="100%" cellspacing="0" id="ikl-lengkongsari-table">
                     <thead class="text-center" style="background-color: #f2f2f2;">
@@ -50,44 +79,40 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{-- Loop data dari controller, variabel disesuaikan menjadi $items --}}
-                        @forelse ($items as $item)
+                        {{-- DIPERBAIKI: Variabel disesuaikan menjadi $ikls dan $ikl agar cocok dengan Controller --}}
+                        @forelse ($ikls as $ikl)
                             <tr>
                                 <td class="text-center">{{ $loop->iteration }}</td>
-                                <td>{{ $item->nama_barang }}</td>
-                                <td>{{ $item->merk_model ?? '-' }}</td>
-                                <td>{{ $item->bahan ?? '-' }}</td>
-                                <td class="text-center">{{ $item->tahun_pembelian }}</td>
-                                <td>{{ $item->kode_barang }}</td>
-                                <td class="text-center">{{ $item->jumlah }}</td>
-                                <td class="text-right">{{ number_format($item->harga_perolehan, 0, ',', '.') }}</td>
+                                <td>{{ $ikl->nama_barang }}</td>
+                                <td>{{ $ikl->merk_model ?? '-' }}</td>
+                                <td>{{ $ikl->bahan ?? '-' }}</td>
+                                <td class="text-center">{{ $ikl->tahun_pembelian }}</td>
+                                <td>{{ $ikl->kode_barang }}</td>
+                                <td class="text-center">{{ $ikl->jumlah }}</td>
+                                <td class="text-right">{{ number_format($ikl->harga_perolehan, 0, ',', '.') }}</td>
                                 
-                                {{-- Menampilkan kondisi barang dengan ikon --}}
-                                <td class="text-center">@if($item->kondisi == 'B') <i class="fas fa-check-circle text-success"></i> @endif</td>
-                                <td class="text-center">@if($item->kondisi == 'KB') <i class="fas fa-exclamation-circle text-warning"></i> @endif</td>
-                                <td class="text-center">@if($item->kondisi == 'RB') <i class="fas fa-times-circle text-danger"></i> @endif</td>
+                                <td class="text-center">@if($ikl->kondisi == 'B') <i class="fas fa-check-circle text-success"></i> @endif</td>
+                                <td class="text-center">@if($ikl->kondisi == 'KB') <i class="fas fa-exclamation-circle text-warning"></i> @endif</td>
+                                <td class="text-center">@if($ikl->kondisi == 'RB') <i class="fas fa-times-circle text-danger"></i> @endif</td>
                                 
-                                <td>{{ $item->keterangan }}</td>
+                                <td>{{ $ikl->keterangan }}</td>
                                 <td class="text-center">
                                     <div class="btn-group" role="group" aria-label="Aksi">
-                                        <!-- Tombol Pindah Ruangan -->
                                         <button type="button" class="btn btn-info btn-sm move-item-btn mr-1" 
                                                 data-toggle="modal" 
                                                 data-target="#moveItemModal" 
-                                                data-id="{{ $item->id }}" 
-                                                data-name="{{ $item->nama_barang }}"
-                                                data-rkl="{{ $item->rkl->name ?? 'N/A' }}"
+                                                data-id="{{ $ikl->id }}" 
+                                                data-name="{{ $ikl->nama_barang }}"
+                                                data-rkl="{{ $ikl->rkl->name ?? 'N/A' }}"
                                                 title="Pindah Ruangan">
                                             <i class="fas fa-people-carry"></i>
                                         </button>
 
-                                        <!-- Tombol Edit -->
-                                        <a href="{{ route('lengkongsari.ikl.edit', $item->id) }}" class="btn btn-warning btn-sm mr-1" title="Edit Barang">
+                                        <a href="{{ route('lengkongsari.ikl.edit', $ikl->id) }}" class="btn btn-warning btn-sm mr-1" title="Edit Barang">
                                             <i class="fas fa-pen"></i>
                                         </a>
 
-                                        <!-- Tombol Hapus -->
-                                        <form action="{{ route('lengkongsari.ikl.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus barang ini?');" style="display:inline;">
+                                        <form action="{{ route('lengkongsari.ikl.destroy', $ikl->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus barang ini?');" style="display:inline;">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger btn-sm" title="Hapus Barang">
@@ -131,7 +156,6 @@
                         <label for="new_rkl_id">Pindahkan ke Ruangan:</label>
                         <select class="form-control" id="new_rkl_id" name="new_rkl_id" required>
                             <option value="">-- Pilih Ruangan Tujuan --</option>
-                            {{-- Membutuhkan variabel $rkls dari controller --}}
                             @foreach ($rkls as $rkl)
                                 <option value="{{ $rkl->id }}">{{ $rkl->name }}</option>
                             @endforeach
@@ -155,8 +179,12 @@ $(document).ready(function() {
         const itemId = $(this).data('id');
         const itemName = $(this).data('name');
         const currentRkl = $(this).data('rkl');
-        // URL disesuaikan dengan route move untuk IKL Lengkongsari
-        const formAction = "{{ url('ikl') }}/" + itemId + "/move";
+        
+        // DIPERBAIKI: Ini adalah perbaikan bug paling penting.
+        // URL sekarang dibuat menggunakan nama route Laravel yang benar,
+        // sehingga akan selalu benar meskipun ada perubahan struktur URL.
+        let formAction = "{{ route('lengkongsari.ikl.move', ['ikl' => ':id']) }}";
+        formAction = formAction.replace(':id', itemId);
         
         $('#moveItemForm').attr('action', formAction);
         $('#itemName').text(itemName);
@@ -165,4 +193,3 @@ $(document).ready(function() {
 });
 </script>
 @endpush
-

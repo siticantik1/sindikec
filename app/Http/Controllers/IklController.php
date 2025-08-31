@@ -2,121 +2,116 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ikl;   // Pastikan nama model Anda benar
+use App\Models\Rkl;   // Pastikan nama model Anda benar
 use Illuminate\Http\Request;
+use PDF;
 
 class IklController extends Controller
 {
     /**
-     * Menampilkan daftar semua item inventaris, bisa difilter berdasarkan ruangan.
+     * Menampilkan daftar item IKL HANYA untuk Lengkongsari.
      */
     public function index(Request $request)
     {
-        $rkls = Rkl::orderBy('name')->get();
-        $query = ikl::with('rkl');
+        $lokasi = 'lengkongsari';
+        $rkls = Rkl::where('lokasi', $lokasi)->orderBy('name')->get();
+        $query = Ikl::with('rkl')->where('lokasi', $lokasi);
 
         if ($request->has('rkl_id') && $request->rkl_id != '') {
             $query->where('rkl_id', $request->rkl_id);
         }
 
-        $ikl = $query->latest()->get();
+        $ikls = $query->latest()->get();
         $selectedRkl = Rkl::find($request->rkl_id);
 
         return view('pages.ikl.index', [
-            'ikl' => $ikl,
+            // DISEMPURNAKAN: Nama variabel disamakan (ikls) agar konsisten dengan controllernya
+            'ikls' => $ikls, 
             'rkls' => $rkls,
-            'selectedRkls' => $selectedrkls,
+            'selectedRkl' => $selectedRkl,
         ]);
     }
 
     /**
-     * Menampilkan form untuk membuat barang baru.
+     * Menampilkan form untuk membuat barang IKL baru.
      */
     public function create()
     {
-        $rkls = Rkl::orderBy('name')->get();
-        return view('pages.ikl.create', compact('rkls'));
+        $lokasi = 'lengkongsari';
+        $rkls = Rkl::where('lokasi', $lokasi)->orderBy('name')->get();
+        
+        return view('pages.ikl.create', compact('rkls', 'lokasi'));
     }
 
     /**
-     * Menyimpan data barang baru ke database.
+     * Menyimpan data IKL baru dengan lokasi 'lengkongsari'.
      */
     public function store(Request $request)
     {
-        // Validasi input dari form
         $request->validate([
             'nama_barang' => 'required|string|max:255',
             'rkl_id' => 'required|exists:rkls,id',
-            'kode_barang' => 'required|string|unique:ikl,kode_barang',
+            'kode_barang' => 'required|string|unique:ikls,kode_barang',
             'tahun_pembelian' => 'required|numeric|digits:4',
             'jumlah' => 'required|integer|min:1',
             'harga_perolehan' => 'required|numeric',
             'kondisi' => 'required|in:B,KB,RB',
-            // Tambahkan validasi lain jika perlu
+            'lokasi' => 'required|in:lengkongsari',
         ]);
 
         Ikl::create($request->all());
 
-        return redirect()->route('ikl.index')
-                         ->with('success', 'Barang baru berhasil ditambahkan.');
+        return redirect()->route('lengkongsari.ikl.index')
+                         ->with('success', 'Barang IKL baru berhasil ditambahkan.');
     }
 
     /**
-     * Menampilkan detail dari satu item inventaris spesifik.
+     * Menampilkan form untuk mengedit data barang IKL.
      */
-    public function show($id)
+    public function edit(Ikl $ikl) // DISEMPURNAKAN: Menggunakan Route Model Binding
     {
-        $item = Ikl::with('rkl')->findOrFail($id);
-        return view('pages.ikl.show', ['item' => $item]);
+        // Ambil RKL HANYA dari lokasi barang yang diedit
+        $rkls = Rkl::where('lokasi', $ikl->lokasi)->orderBy('name')->get();
+        
+        return view('pages.ikl.edit', compact('ikl', 'rkls'));
     }
 
     /**
-     * Menampilkan form untuk mengedit data barang.
+     * Memperbarui data barang IKL di database.
      */
-    public function edit($id)
+    public function update(Request $request, Ikl $ikl) // DISEMPURNAKAN: Menggunakan Route Model Binding
     {
-        $item = Ikl::findOrFail($id);
-        $rkls = Rkl::orderBy('name')->get();
-        return view('pages.ikl.edit', compact('item', 'rkls'));
-    }
-
-    /**
-     * Memperbarui data barang di database.
-     */
-    public function update(Request $request, $id)
-    {
-        $item = Ikl::findOrFail($id);
-
-        // Validasi input
+        // DISEMPURNAKAN: Validasi dilengkapi agar sama seperti saat membuat data baru
         $request->validate([
             'nama_barang' => 'required|string|max:255',
             'rkl_id' => 'required|exists:rkls,id',
-            'kode_barang' => 'required|string|unique:ikl,kode_barang,' . $item->id,
+            'kode_barang' => 'required|string|unique:ikls,kode_barang,' . $ikl->id,
             'tahun_pembelian' => 'required|numeric|digits:4',
             'jumlah' => 'required|integer|min:1',
             'harga_perolehan' => 'required|numeric',
             'kondisi' => 'required|in:B,KB,RB',
         ]);
 
-        $item->update($request->all());
+        $ikl->update($request->all());
 
-        return redirect()->route('ikl.index')
+        return redirect()->route('lengkongsari.ikl.index')
                          ->with('success', 'Data barang berhasil diperbarui.');
     }
 
     /**
-     * Menghapus data barang dari database.
+     * Menghapus data barang IKL dari database.
      */
-    public function destroy($id)
+    public function destroy(Ikl $ikl) // DISEMPURNAKAN: Menggunakan Route Model Binding
     {
-        $item = Ikl::findOrFail($id);
-        $item->delete();
+        $ikl->delete();
 
-        return redirect()->route('ikl.index')
+        return redirect()->route('lengkongsari.ikl.index')
                          ->with('success', 'Barang berhasil dihapus.');
     }
 
     /**
-     * Memindahkan barang ke ruangan lain.
+     * Memindahkan barang ke ruangan RKL lain.
      */
     public function move(Request $request, $id)
     {
@@ -128,33 +123,34 @@ class IklController extends Controller
         $item->rkl_id = $request->new_rkl_id;
         $item->save();
 
-        // Menggunakan back() agar kembali ke halaman sebelumnya (misal halaman yang difilter)
         return back()->with('success', 'Barang berhasil dipindahkan.');
     }
 
     /**
-     * Membuat dan mengunduh laporan inventaris dalam format PDF.
+     * Membuat laporan PDF khusus untuk IKL Lengkongsari.
      */
     public function pdf(Request $request)
     {
-        $query = Ikl::with('rkl');
+        $lokasi = 'lengkongsari';
+        $query = Ikl::with('rkl')->where('lokasi', $lokasi);
 
         if ($request->has('rkl_id') && $request->rkl_id != '') {
             $query->where('rkl_id', $request->rkl_id);
         }
 
-        $ikl = $query->latest()->get();
+        $ikls = $query->latest()->get();
         $selectedRkl = Rkl::find($request->rkl_id);
         $tanggalCetak = now()->translatedFormat('d F Y');
 
-        // Pastikan nama view PDF-nya benar
         $pdf = PDF::loadView('pages.ikl.pdf', [
-            'ikl' => $ikl,
+            // DISEMPURNAKAN: Nama variabel disamakan (ikls)
+            'ikls' => $ikls,
             'selectedRkl' => $selectedRkl,
             'tanggalCetak' => $tanggalCetak,
         ]);
-
-        $fileName = 'laporan-ikl-' . date('Y-m-d') . '.pdf';
+        
+        $fileName = 'laporan-ikl-' . $lokasi . '-' . date('Y-m-d') . '.pdf';
         return $pdf->download($fileName);
     }
 }
+

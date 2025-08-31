@@ -2,105 +2,97 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Rkl;
+use App\Models\Rkl; // Pastikan nama model RKL Anda benar
 use Illuminate\Http\Request;
-use PDF; // Pastikan barryvdh/laravel-dompdf sudah di-install
 
 class RklController extends Controller
 {
-   /**
-     * Menampilkan daftar semua ruangan.
+    /**
+     * Menampilkan daftar RKL sesuai lokasi (Tawang/Lengkongsari).
      */
-    public function index()
+    public function index(Request $request)
     {
-        $rkls = Rkl::all();
+        // DISEMPURNAKAN: Logika deteksi lokasi yang fleksibel
+        $lokasi = $request->is('lengkongsari/*') ? 'lengkongsari' : 'tawang';
         
-        // Kode ini sudah benar untuk mengirim data ke konten utama halaman.
-        // Data untuk sidebar (jika ada) sebaiknya di-handle oleh AppServiceProvider.
-        return view('pages.rkl.index', [
-            'rkls' => $rkls
-        ]);
+        $rkls = Rkl::where('lokasi', $lokasi)->orderBy('name')->get();
+        return view('pages.rkl.index', compact('rkls'));
     }
 
     /**
-     * Menampilkan form untuk membuat ruangan baru.
+     * Menampilkan form untuk membuat RKL baru.
      */
-    public function create()
+    public function create(Request $request)
     {
-        return view('pages.rkl.create');
+        // DISEMPURNAKAN: Lokasi ditentukan secara dinamis
+        $lokasi = $request->is('lengkongsari/*') ? 'lengkongsari' : 'tawang';
+        
+        return view('pages.rkl.create', compact('lokasi'));
     }
 
     /**
-     * Menyimpan data ruangan baru ke database.
+     * Menyimpan RKL baru ke database.
      */
     public function store(Request $request)
     {
-        // Validasi sudah bagus
-        $validatedData = $request->validate([
-            'name' => ['required', 'max:100'],
-            'code' => ['required', 'max:100', 'unique:rkls,code'], // Saran: tambahkan unique agar kode tidak duplikat
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|unique:rkls,code',
+            // DISEMPURNAKAN: Validasi lokasi dibuat dinamis
+            'lokasi' => 'required|in:tawang,lengkongsari',
         ]);
 
-        Rkl::create($validatedData);
+        Rkl::create($request->all());
 
-        return redirect('/rkl')->with('sukses', 'Berhasil menambahkan data ruangan.');
+        // DISEMPURNAKAN: Redirect akan otomatis menyesuaikan dengan lokasi
+        $redirectRoute = $request->lokasi == 'lengkongsari' ? 'lengkongsari.rkl.index' : 'rkl.index';
+
+        return redirect()->route($redirectRoute)
+                         ->with('success', 'RKL baru berhasil ditambahkan.');
     }
 
     /**
-     * Menampilkan form untuk mengedit data ruangan.
+     * Menampilkan form untuk mengedit RKL.
      */
-    public function edit($id)
+    public function edit(Request $request, Rkl $rkl)
     {
-        $rkl = rkl::findOrFail($id);
-
-        return view('pages.rkl.edit', [
-            'rkl' => $rkl,
-        ]);
+        // DISEMPURNAKAN: Mengirim juga variabel lokasi ke view edit
+        $lokasi = $request->is('lengkongsari/*') ? 'lengkongsari' : 'tawang';
+        return view('pages.rkl.edit', compact('rkl', 'lokasi'));
     }
-    
+
     /**
-     * Memperbarui data ruangan di database.
+     * Memperbarui data RKL di database.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Rkl $rkl)
     {
-        $validatedData = $request->validate([
-            'name' => ['required', 'max:100'],
-            'code' => ['required', 'max:100', 'unique:rkl,code,' . $id], // Saran: tambahkan unique dengan pengecualian ID saat ini
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|unique:rkls,code,' . $rkl->id,
         ]);
 
-        Rkl::findOrFail($id)->update($validatedData);
+        $rkl->update($request->all());
 
-        return redirect('/rkl')->with('sukses', 'Berhasil mengubah data ruangan.');
+        // DISEMPURNAKAN: Redirect otomatis berdasarkan lokasi dari data yang di-update
+        $redirectRoute = $rkl->lokasi == 'lengkongsari' ? 'lengkongsari.rkl.index' : 'rkl.index';
+
+        return redirect()->route($redirectRoute)
+                         ->with('success', 'Data RKL berhasil diperbarui.');
     }
-    
+
     /**
-     * Menghapus data ruangan dari database.
+     * Menghapus data RKL dari database.
      */
-    public function destroy($id)
+    public function destroy(Rkl $rkl)
     {
-        $rkl = Rkl::findOrFail($id);
+        $lokasi = $rkl->lokasi; // Simpan info lokasi sebelum dihapus
         $rkl->delete();
 
-        return redirect('/rkl')->with('sukses', 'Berhasil menghapus data ruangan.');
+        // DISEMPURNAKAN: Redirect otomatis berdasarkan lokasi dari data yang dihapus
+        $redirectRoute = $lokasi == 'lengkongsari' ? 'lengkongsari.rkl.index' : 'rkl.index';
+
+        return redirect()->route($redirectRoute)
+                         ->with('success', 'RKL berhasil dihapus.');
     }
-
-    /**
-     * Membuat dan menampilkan laporan dalam format PDF.
-     */
-    public function printPDF()
-    {
-        $rkls = Rkl::all(); 
-        
-        // Menggunakan count() untuk menghitung total baris/data ruangan.
-        $total_ruangan = $rkls->count();
-
-        $pdf = PDF::loadView('pages.room.cetak', [
-            'rkls' => $rkls,
-            'total_ruangan' => $total_ruangan
-        ]);
-
-        $pdf->setPaper('A4', 'portrait');
-
-        return $pdf->stream('laporan-data-ruangan.pdf');
-    }  
 }
+
