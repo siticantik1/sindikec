@@ -25,7 +25,7 @@
 
                <!-- Heading -->
     <div class="sidebar-heading">
-        Data Barang
+        Kecamatan Tawang
     </div>
 
     <li class="nav-item {{ request()->is('room*') ? 'active' : '' }}">
@@ -63,6 +63,41 @@
             </div>
         </div>
     </li>
+    <hr class="sidebar-divider">
+
+<div class="sidebar-heading">
+    Kelurahan Lengkongsari
+</div>
+
+<li class="nav-item {{ request()->is('lengkongsari/rkl*') ? 'active' : '' }}">
+    <a class="nav-link" href="/lengkongsari/rkl">
+        <i class="fas fa-fw fa-door-open"></i>
+        <span>Data Ruangan</span>
+    </a>
+</li>
+
+<li class="nav-item {{ request()->is('lengkongsari/ikl*') ? 'active' : '' }}">
+    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseInventaris kelurahan Lengkongsari"
+        aria-expanded="true" aria-controls="collapseIkl">
+        <i class="fas fa-fw fa-boxes"></i>
+        <span>Data Inventori Ruangan</span>
+    </a>
+    
+    <div id="collapseIkl" class="collapse {{ request()->is('lengkongsari/ikl*') ? 'show' : '' }}" aria-labelledby="headingIkl" data-parent="#accordionSidebar">
+        <div class="bg-white py-2 collapse-inner rounded">
+            <h6 class="collapse-header">Pilih Ruangan:</h6>
+            
+            @forelse ($ruangansForSidebar as $ruangan)
+                <a class="collapse-item {{ request('rkl_id') == $ruangan->id ? 'active' : '' }}" 
+                   href="{{ route('lengkongsari.ikl.index', ['rkl_id' => $ruangan->id]) }}">
+                    {{ $ruangan->name }}
+                </a>
+            @empty
+                <a class="collapse-item" href="{{ route('rkl.create') }}">Tambah Ruangan Dulu</a>
+            @endempty
+        </div>
+    </div>
+</li>
             <!-- Divider -->
             <hr class="sidebar-divider d-none d-md-block">
 
