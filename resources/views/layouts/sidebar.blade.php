@@ -63,6 +63,24 @@
             </div>
         </div>
     </li>
+
+    <li class="nav-item {{ request()->is('barang*') ? 'active' : '' }}">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsebarang"
+            aria-expanded="true" aria-controls="collapsebarang">
+            <i class="fas fa-fw fa-boxes"></i>
+            <span>Data Barang</span>
+        </a>
+
+         <div id="collapsebarang" class="collapse {{ request()->is('barang*') ? 'show' : '' }}" aria-labelledby="headingInventaris" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Pilih Data:</h6>
+                <a class="collapse-item" href="#">Tanah</a>
+                <a class="collapse-item" href="#">Peralatan & Mesin</a>
+                <a class="collapse-item" href="#">Gedung & Bangunan</a>
+                <a class="collapse-item" href="#">Rusak Berat</a>
+            </div>
+        </div>
+    </li>
     <hr class="sidebar-divider">
 
 <div class="sidebar-heading">
@@ -98,6 +116,23 @@
         </div>
     </div>
 </li>
+<li class="nav-item {{ request()->is('barangl*') ? 'active' : '' }}">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsebarangl"
+            aria-expanded="true" aria-controls="collapsebarangl">
+            <i class="fas fa-fw fa-boxes"></i>
+            <span>Data Barang</span>
+        </a>
+
+         <div id="collapsebarangl" class="collapse {{ request()->is('barangl*') ? 'show' : '' }}" aria-labelledby="headingInventaris" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Pilih Data:</h6>
+                <a class="collapse-item" href="#">Tanah</a>
+                <a class="collapse-item" href="#">Peralatan & Mesin</a>
+                <a class="collapse-item" href="#">Gedung & Bangunan</a>
+                <a class="collapse-item" href="#">Rusak Berat</a>
+            </div>
+        </div>
+    </li>
             <!-- Divider -->
             <hr class="sidebar-divider d-none d-md-block">
 
