@@ -3,11 +3,11 @@
 @section('content')
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        {{-- DIUBAH: Judul dibuat dinamis untuk menunjukkan lokasi --}}
-        <h1 class="h3 mb-0 text-gray-800">Tambah Ruangan Baru ({{ ucfirst($lokasi) }})</h1>
+        {{-- PERBAIKAN: Judul dibuat statis untuk Tawang agar tidak butuh variabel $lokasi --}}
+        <h1 class="h3 mb-0 text-gray-800">Tambah Ruangan Baru (Kec. Tawang)</h1>
         
-        {{-- Tombol untuk kembali ke halaman sebelumnya --}}
-        <a href="{{ url()->previous() }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+        {{-- PERBAIKAN: Tombol kembali diarahkan ke route yang benar ('tawang.room.index') --}}
+        <a href="{{ route('tawang.room.index') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
             <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kembali
         </a>
     </div>
@@ -20,29 +20,27 @@
                     <h6 class="m-0 font-weight-bold text-primary">Formulir Tambah Ruangan</h6>
                 </div>
                 <div class="card-body">
-                    {{-- Arahkan form ke route 'room.store' dengan method POST --}}
-                    <form action="{{ route('room.store') }}" method="POST">
-                        {{-- Token CSRF untuk keamanan --}}
+                    {{-- ====================================================== --}}
+                    {{-- PERBAIKAN UTAMA: Action form diarahkan ke 'tawang.room.store' --}}
+                    {{-- ====================================================== --}}
+                    <form action="{{ route('tawang.room.store') }}" method="POST">
                         @csrf
 
-                        {{-- DITAMBAHKAN: INI ADALAH BAGIAN PALING PENTING --}}
-                        {{-- Input tersembunyi ini akan mengirimkan info lokasi ke controller saat form disubmit --}}
-                        <input type="hidden" name="lokasi" value="{{ $lokasi }}">
+                        {{-- Input 'lokasi' yang tersembunyi dihapus karena tidak diperlukan lagi --}}
 
                         <div class="form-group">
                             <label for="name">Nama Ruangan</label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" placeholder="Masukkan nama ruangan..." value="{{ old('name') }}" required>
-                            {{-- Menampilkan pesan error jika validasi 'name' gagal --}}
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <div class="form-group">
-                            <label for="code">Kode Ruangan</label>
-                            <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" placeholder="Masukkan kode ruangan..." value="{{ old('code') }}" required>
-                             {{-- Menampilkan pesan error jika validasi 'code' gagal --}}
-                            @error('code')
+                            <label for="kode_ruangan">Kode Ruangan</label>
+                            {{-- PERBAIKAN: Nama input diubah dari 'code' menjadi 'kode_ruangan' agar konsisten --}}
+                            <input type="text" class="form-control @error('kode_ruangan') is-invalid @enderror" id="kode_ruangan" name="kode_ruangan" placeholder="Masukkan kode unik ruangan..." value="{{ old('kode_ruangan') }}" required>
+                            @error('kode_ruangan')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

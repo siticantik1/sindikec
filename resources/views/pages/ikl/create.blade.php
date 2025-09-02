@@ -7,23 +7,12 @@
 
     <!-- Page Heading -->
     <div class="d-flex justify-content-between align-items-center mb-4">
+        {{-- Judul ini sekarang akan bekerja karena $lokasi sudah dikirim dari controller --}}
         <h1 class="h3 text-gray-800">Tambah Barang Inventaris Baru ({{ ucfirst($lokasi) }})</h1>
-        {{-- DISEMPURNAKAN: Tombol Kembali dibuat lebih dinamis --}}
-        <a href="{{ url()->previous() }}" class="btn btn-secondary btn-sm">
+        <a href="{{ route('lengkongsari.ikl.index') }}" class="btn btn-secondary btn-sm">
             <i class="fas fa-arrow-left fa-sm"></i> Kembali
         </a>
     </div>
-
-    {{-- Menampilkan pesan error validasi jika ada --}}
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
@@ -32,7 +21,7 @@
         <div class="card-body">
             <form action="{{ route('lengkongsari.ikl.store') }}" method="POST">
                 @csrf
-                <input type="hidden" name="lokasi" value="{{ $lokasi }}">
+                {{-- Input lokasi tersembunyi tidak diperlukan lagi karena controller sudah pintar --}}
 
                 <div class="row">
                     <!-- Kolom Kiri -->
@@ -53,7 +42,6 @@
                             <label for="rkl_id">Lokasi Ruangan (RKL) <span class="text-danger">*</span></label>
                             <select class="form-control @error('rkl_id') is-invalid @enderror" id="rkl_id" name="rkl_id" required>
                                 <option value="">-- Pilih Ruangan --</option>
-                                {{-- DISEMPURNAKAN: Menggunakan @forelse untuk menangani kasus jika RKL belum ada --}}
                                 @forelse($rkls as $rkl)
                                     <option value="{{ $rkl->id }}" {{ old('rkl_id') == $rkl->id ? 'selected' : '' }}>{{ $rkl->name }}</option>
                                 @empty
@@ -63,17 +51,14 @@
                             @error('rkl_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         
-                        {{-- Field opsional (tidak wajib diisi) --}}
                         <div class="form-group">
                             <label for="merk_model">Merk / Model</label>
                             <input type="text" class="form-control @error('merk_model') is-invalid @enderror" id="merk_model" name="merk_model" value="{{ old('merk_model') }}">
-                            @error('merk_model') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         
                         <div class="form-group">
                             <label for="bahan">Bahan</label>
                             <input type="text" class="form-control @error('bahan') is-invalid @enderror" id="bahan" name="bahan" value="{{ old('bahan') }}">
-                            @error('bahan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
 
@@ -82,19 +67,16 @@
                         <div class="form-group">
                             <label for="tahun_pembelian">Tahun Pembelian <span class="text-danger">*</span></label>
                             <input type="number" class="form-control @error('tahun_pembelian') is-invalid @enderror" id="tahun_pembelian" name="tahun_pembelian" value="{{ old('tahun_pembelian') }}" placeholder="Contoh: 2023" required>
-                            @error('tahun_pembelian') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="form-group">
                             <label for="jumlah">Jumlah <span class="text-danger">*</span></label>
                             <input type="number" class="form-control @error('jumlah') is-invalid @enderror" id="jumlah" name="jumlah" value="{{ old('jumlah', 1) }}" min="1" required>
-                            @error('jumlah') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="form-group">
                             <label for="harga_perolehan">Harga (Rp) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control @error('harga_perolehan') is-invalid @enderror" id="harga_perolehan" name="harga_perolehan" value="{{ old('harga_perolehan') }}" placeholder="Contoh: 1500000" required>
-                            @error('harga_perolehan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="form-group">
@@ -105,13 +87,11 @@
                                 <option value="KB" {{ old('kondisi') == 'KB' ? 'selected' : '' }}>Kurang Baik (KB)</option>
                                 <option value="RB" {{ old('kondisi') == 'RB' ? 'selected' : '' }}>Rusak Berat (RB)</option>
                             </select>
-                            @error('kondisi') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         
                         <div class="form-group">
                             <label for="keterangan">Keterangan</label>
                             <textarea class="form-control @error('keterangan') is-invalid @enderror" id="keterangan" name="keterangan" rows="3">{{ old('keterangan') }}</textarea>
-                            @error('keterangan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
                 </div>

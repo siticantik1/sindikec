@@ -1,109 +1,110 @@
 @php
- // Mengambil data semua ruangan untuk ditampilkan di submenu inventaris.
-    $ruangansForSidebar = \App\Models\Room::orderBy('name', 'asc')->get();
+    // Mengambil data RUANGAN (Room) untuk Tawang dari model Room.
+    $roomsTawang = \App\Models\Room::where('lokasi', 'tawang')->orderBy('name')->get();
+    
+    // Mengambil data RUANGAN (Rkl) untuk Lengkongsari dari model Rkl.
+    $rklsLengkongsari = \App\Models\Rkl::where('lokasi', 'lengkongsari')->orderBy('name')->get();
 @endphp
+
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
-         <div class="sidebar-brand-icon rotate-n-15">
-                <!--i class="fas fa-laugh-wink"></i-->
-                </div>
-                <div class="sidebar-brand-text mx-3">SINDI</div>
-            </a>
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ route('dashboard') }}">
+        <div class="sidebar-brand-text mx-3">SINDI</div>
+    </a>
 
-            <!-- Divider -->
-            <hr class="sidebar-divider my-0">
+    <!-- Divider -->
+    <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item active">
-                <a class="nav-link" href="/dashboard">
-                    <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span></a>
-            </li>
+    <!-- Nav Item - Dashboard -->
+    <li class="nav-item {{ request()->is('dashboard') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('dashboard') }}">
+            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <span>Dashboard</span></a>
+    </li>
 
-            <!-- Divider -->
-            <hr class="sidebar-divider">
+    <!-- Divider -->
+    <hr class="sidebar-divider">
 
-               <!-- Heading -->
+    <!-- Heading -->
     <div class="sidebar-heading">
         Kecamatan Tawang
     </div>
 
-    <li class="nav-item {{ request()->is('room*') ? 'active' : '' }}">
-        <a class="nav-link" href="/room">
+    {{-- ====================================================== --}}
+    {{-- PERBAIKAN NAMA ROUTE DAN URL DI BAGIAN INI --}}
+    {{-- ====================================================== --}}
+
+    <li class="nav-item {{ request()->is('tawang/room*') ? 'active' : '' }}">
+        {{-- PERBAIKAN: Diubah menjadi 'tawang.room.index' --}}
+        <a class="nav-link" href="{{ route('tawang.room.index') }}">
             <i class="fas fa-fw fa-door-open"></i>
             <span>Data Ruangan</span>
         </a>
     </li>
 
-    <!-- Nav Item - Data Inventori Ruangan (Collapsible Menu) -->
-    <li class="nav-item {{ request()->is('inventaris*') ? 'active' : '' }}">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseInventaris"
-            aria-expanded="true" aria-controls="collapseInventaris">
+    <li class="nav-item {{ request()->is('tawang/inventaris*') ? 'active' : '' }}">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseInventarisTawang" aria-expanded="true" aria-controls="collapseInventarisTawang">
             <i class="fas fa-fw fa-boxes"></i>
             <span>Data Inventori Ruangan</span>
         </a>
         
-        <div id="collapseInventaris" class="collapse {{ request()->is('inventaris*') ? 'show' : '' }}" aria-labelledby="headingInventaris" data-parent="#accordionSidebar">
+        <div id="collapseInventarisTawang" class="collapse {{ request()->is('tawang/inventaris*') ? 'show' : '' }}" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <h6 class="collapse-header">Pilih Ruangan:</h6>
-                
-                @forelse ($ruangansForSidebar as $ruangan)
-                    {{-- 
-                        PERUBAHAN UTAMA DI SINI:
-                        - href sekarang menggunakan route('inventaris.index') dengan parameter 'room_id'.
-                        - Pengecekan 'active' sekarang membandingkan request('room_id') dengan $ruangan->id.
-                    --}}
-                    <a class="collapse-item {{ request('room_id') == $ruangan->id ? 'active' : '' }}" 
-                       href="{{ route('inventaris.index', ['room_id' => $ruangan->id]) }}">
-                        {{ $ruangan->name }}
+                @forelse ($roomsTawang as $room)
+                    {{-- PERBAIKAN: Diubah menjadi 'tawang.inventaris.index' --}}
+                    <a class="collapse-item {{ request('room_id') == $room->id ? 'active' : '' }}" 
+                       href="{{ route('tawang.inventaris.index', ['room_id' => $room->id]) }}">
+                        {{ $room->name }}
                     </a>
                 @empty
-                    <a class="collapse-item" href="{{ route('room.create') }}">Tambah Ruangan Dulu</a>
+                    {{-- PERBAIKAN: Diubah menjadi 'tawang.room.create' --}}
+                    <a class="collapse-item" href="{{ route('tawang.room.create') }}">Tambah Ruangan Dulu</a>
                 @endforelse
             </div>
         </div>
     </li>
+    
     <hr class="sidebar-divider">
 
-<div class="sidebar-heading">
-    Kelurahan Lengkongsari
-</div>
-
-<li class="nav-item {{ request()->is('lengkongsari/rkl*') ? 'active' : '' }}">
-    <a class="nav-link" href="/lengkongsari/rkl">
-        <i class="fas fa-fw fa-door-open"></i>
-        <span>Data Ruangan</span>
-    </a>
-</li>
-
-<li class="nav-item {{ request()->is('lengkongsari/ikl*') ? 'active' : '' }}">
-    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseInventaris kelurahan Lengkongsari"
-        aria-expanded="true" aria-controls="collapseIkl">
-        <i class="fas fa-fw fa-boxes"></i>
-        <span>Data Inventori Ruangan</span>
-    </a>
-    
-    <div id="collapseIkl" class="collapse {{ request()->is('lengkongsari/ikl*') ? 'show' : '' }}" aria-labelledby="headingIkl" data-parent="#accordionSidebar">
-        <div class="bg-white py-2 collapse-inner rounded">
-            <h6 class="collapse-header">Pilih Ruangan:</h6>
-            
-            @forelse ($ruangansForSidebar as $ruangan)
-                <a class="collapse-item {{ request('rkl_id') == $ruangan->id ? 'active' : '' }}" 
-                   href="{{ route('lengkongsari.ikl.index', ['rkl_id' => $ruangan->id]) }}">
-                    {{ $ruangan->name }}
-                </a>
-            @empty
-                <a class="collapse-item" href="{{ route('rkl.create') }}">Tambah Ruangan Dulu</a>
-            @endempty
-        </div>
+    <div class="sidebar-heading">
+        Kelurahan Lengkongsari
     </div>
-</li>
-            <!-- Divider -->
-            <hr class="sidebar-divider d-none d-md-block">
 
-            <!-- Sidebar Toggler (Sidebar) -->
-            <div class="text-center d-none d-md-inline">
-                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+    {{-- Bagian Lengkongsari ini sudah benar, tidak perlu diubah --}}
+    <li class="nav-item {{ request()->is('lengkongsari/rkl*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('lengkongsari.rkl.index') }}">
+            <i class="fas fa-fw fa-door-closed"></i>
+            <span>Data Ruangan</span>
+        </a>
+    </li>
+
+    <li class="nav-item {{ request()->is('lengkongsari/ikl*') ? 'active' : '' }}">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseIklLengkongsari" aria-expanded="true" aria-controls="collapseIklLengkongsari">
+            <i class="fas fa-fw fa-archive"></i>
+            <span>Data Inventori Ruangan</span>
+        </a>
+        
+        <div id="collapseIklLengkongsari" class="collapse {{ request()->is('lengkongsari/ikl*') ? 'show' : '' }}" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Pilih Ruangan:</h6>
+                @forelse ($rklsLengkongsari as $rkl)
+                    <a class="collapse-item {{ request('rkl_id') == $rkl->id ? 'active' : '' }}" 
+                       href="{{ route('lengkongsari.ikl.index', ['rkl_id' => $rkl->id]) }}">
+                        {{ $rkl->name }}
+                    </a>
+                @empty
+                    <a class="collapse-item" href="{{ route('lengkongsari.rkl.create') }}">Tambah Ruangan Dulu</a>
+                @endforelse
             </div>
-            
-        </ul>
+        </div>
+    </li>
+    
+    <!-- Divider -->
+    <hr class="sidebar-divider d-none d-md-block">
+
+    <!-- Sidebar Toggler (Sidebar) -->
+    <div class="text-center d-none d-md-inline">
+        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+    </div>
+</ul>
+

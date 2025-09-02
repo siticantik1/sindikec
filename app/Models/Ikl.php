@@ -2,36 +2,45 @@
 
 namespace App\Models;
 
+// ======================================================
+// PERBAIKAN: Dua baris ini ditambahkan untuk memperbaiki error
+// ======================================================
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Ikl extends Model
 {
-     use HasFactory;
+    // Baris ini sekarang akan bekerja dengan benar
+    use HasFactory;
 
-    // Properti $fillable Anda mungkin sudah ada di sini
+    /**
+     * Nama tabel yang terhubung dengan model ini.
+     */
+    protected $table = 'ikls'; // Sesuaikan jika nama tabelnya berbeda
+
+    /**
+     * The attributes that are mass assignable.
+     * Ini WAJIB ada agar Ikl::create() berhasil.
+     */
     protected $fillable = [
         'nama_barang',
+        'rkl_id', // Pastikan foreign key ke tabel rkls ada
+        'kode_barang',
         'merk_model',
         'bahan',
         'tahun_pembelian',
-        'kode_barang',
         'jumlah',
         'harga_perolehan',
         'kondisi',
         'keterangan',
-        'rkl_id',
     ];
 
-    // ======================================================
-    // TAMBAHKAN FUNGSI INI
-    // ======================================================
     /**
-     * Mendefinisikan relasi bahwa satu Inventaris "milik" satu Ruangan.
+     * Relasi ke model Rkl.
+     * Fungsi ini memberitahu Laravel bahwa setiap 'Ikl' pasti "milik" satu 'Rkl'.
      */
-    public function room()
+    public function rkl()
     {
-        // Laravel akan otomatis mencari foreign key 'room_id'
         return $this->belongsTo(Rkl::class);
     }
-    // ======================================================
 }

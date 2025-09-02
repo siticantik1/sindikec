@@ -16,8 +16,8 @@
 <body>
     <h4>KARTU INVENTARIS RUANGAN</h4>
     
-    {{-- PERBAIKAN: Menggunakan $selectedRoom->name agar sesuai dengan data dari Controller --}}
-    <p><strong>RUANGAN:</strong> {{ $selectedRoom->name ?? 'SEMUA RUANGAN (KEC. TAWANG)' }}</p>
+    {{-- Menggunakan variabel $selectedRkl dan teks untuk Lengkongsari --}}
+    <p><strong>RUANGAN:</strong> {{ $selectedRkl->name ?? 'SEMUA RUANGAN (KEL. LENGKONSARI)' }}</p>
 
     <table class="table">
         <thead class="text-center">
@@ -39,7 +39,8 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($inventaris as $item)
+            {{-- Menggunakan variabel $ikls untuk perulangan data --}}
+            @forelse ($ikls as $item)
                 <tr>
                     <td class="text-center">{{ $loop->iteration }}</td>
                     <td>{{ $item->nama_barang }}</td>
@@ -62,4 +63,3 @@
     </table>
 </body>
 </html>
-

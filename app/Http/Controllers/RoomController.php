@@ -2,70 +2,49 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room; // Pastikan model Room di-import
+use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class RoomController extends Controller
 {
     /**
-     * Menampilkan daftar ruangan sesuai lokasi (Tawang/Lengkongsari).
-     * Logika Anda di sini sudah bagus, saya hanya membuatnya sedikit lebih ringkas.
+     * Menampilkan daftar ruangan HANYA untuk Tawang.
      */
-    public function index(Request $request)
+    public function index()
     {
-        // Tentukan lokasi berdasarkan URL: jika ada 'lengkongsari', maka 'lengkongsari', jika tidak, maka 'tawang'.
-        $lokasi = $request->is('lengkongsari/*') ? 'lengkongsari' : 'tawang';
-        
-        // Ambil data Ruangan dari database, HANYA yang lokasinya sesuai dan urutkan berdasarkan nama.
-        $rooms = Room::where('lokasi', $lokasi)->orderBy('name')->get();
-        
-        // Kirim data yang sudah difilter ke view.
+        $rooms = Room::where('lokasi', 'tawang')->orderBy('name')->get();
         return view('pages.room.index', compact('rooms'));
     }
 
     /**
-     * Menampilkan form untuk membuat ruangan baru.
-     * Method ini yang sebelumnya kosong dan menyebabkan halaman putih.
+     * Menampilkan form untuk membuat ruangan baru untuk Tawang.
      */
-    public function create(Request $request)
+    public function create()
     {
-        // Tentukan lokasi berdasarkan URL agar bisa dikirim ke form.
-        $lokasi = $request->is('lengkongsari/*') ? 'lengkongsari' : 'tawang';
-        
-        // Kirim variabel $lokasi ke view untuk digunakan di hidden input form.
-        return view('pages.room.create', compact('lokasi'));
+        return view('pages.room.create');
     }
 
     /**
-     * Menyimpan ruangan baru ke database dengan penanda lokasi.
+     * Menyimpan ruangan baru ke database.
      */
     public function store(Request $request)
     {
-        // Validasi data yang masuk dari form untuk keamanan.
-        $request->validate([
+        // ======================================================
+        // PERBAIKAN: Validasi disesuaikan menjadi 'kode_ruangan' agar cocok dengan Model
+        // ======================================================
+        $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|unique:rooms,code',
-            'lokasi' => 'required|in:tawang,lengkongsari', // Pastikan lokasi yang dikirim valid.
+            'kode_ruangan' => 'required|string|max:50|unique:rooms,kode_ruangan',
         ]);
 
-        // Jika validasi lolos, simpan data baru ke database.
-        Room::create($request->all());
+        // Lokasi diatur otomatis di sini
+        $validatedData['lokasi'] = 'tawang';
 
-        // Tentukan harus kembali ke halaman mana setelah menyimpan.
-        $redirectRoute = $request->lokasi == 'lengkongsari' ? 'lengkongsari.room.index' : 'room.index';
+        Room::create($validatedData);
 
-        return redirect()->route($redirectRoute)
-                         ->with('success', 'Ruangan baru berhasil ditambahkan.');
-    }
-
-    /**
-     * Display the specified resource. (Biasanya tidak terpakai di admin panel seperti ini)
-     */
-    public function show(Room $room)
-    {
-        // Jika suatu saat butuh halaman detail, bisa diisi di sini.
-        // return view('pages.room.show', compact('room'));
-        return redirect()->route('room.index');
+        return redirect()->route('tawang.room.index')
+                         ->with('success', 'Ruangan baru berhasil ditambahkan!');
     }
 
     /**
@@ -73,7 +52,6 @@ class RoomController extends Controller
      */
     public function edit(Room $room)
     {
-        // Cukup kirim data ruangan yang mau diedit ke view.
         return view('pages.room.edit', compact('room'));
     }
 
@@ -82,19 +60,23 @@ class RoomController extends Controller
      */
     public function update(Request $request, Room $room)
     {
-        $request->validate([
+        // ======================================================
+        // PERBAIKAN UTAMA: Validasi disesuaikan menjadi 'kode_ruangan' agar cocok dengan Model
+        // ======================================================
+        $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            // Pastikan kode unik, kecuali untuk data yang sedang diedit itu sendiri.
-            'code' => 'required|string|unique:rooms,code,' . $room->id,
+            'kode_ruangan' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('rooms', 'kode_ruangan')->ignore($room->id),
+            ],
         ]);
 
-        $room->update($request->all());
+        $room->update($validatedData);
 
-        // Tentukan redirect berdasarkan lokasi dari data yang baru di-update.
-        $redirectRoute = $room->lokasi == 'lengkongsari' ? 'lengkongsari.room.index' : 'room.index';
-
-        return redirect()->route($redirectRoute)
-                         ->with('success', 'Data ruangan berhasil diperbarui.');
+        return redirect()->route('tawang.room.index')
+                         ->with('success', 'Data ruangan berhasil diperbarui!');
     }
 
     /**
@@ -102,14 +84,21 @@ class RoomController extends Controller
      */
     public function destroy(Room $room)
     {
-        // Simpan info lokasi sebelum data dihapus, untuk keperluan redirect.
-        $lokasi = $room->lokasi;
         $room->delete();
-
-        $redirectRoute = $lokasi == 'lengkongsari' ? 'lengkongsari.room.index' : 'room.index';
-
-        return redirect()->route($redirectRoute)
+        return redirect()->route('tawang.room.index')
                          ->with('success', 'Ruangan berhasil dihapus.');
+    }
+    
+    /**
+     * Fungsi untuk mencetak PDF ruangan Tawang.
+     */
+    public function pdf()
+    {
+        // Logika untuk membuat PDF bisa ditambahkan di sini
+        $rooms = Room::where('lokasi', 'tawang')->orderBy('name')->get();
+        // Contoh: return PDF::loadView('pages.room.pdf', compact('rooms'))->download('laporan-ruangan-tawang.pdf');
+        
+        return "Halaman PDF untuk Ruangan Tawang";
     }
 }
 

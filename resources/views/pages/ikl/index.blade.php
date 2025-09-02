@@ -1,4 +1,4 @@
-{{-- Meng-extend layout utama, disesuaikan dengan contoh Anda --}}
+{{-- Meng-extend layout utama --}}
 @extends('layouts.app')
 
 {{-- Bagian untuk judul halaman --}}
@@ -8,7 +8,7 @@
 @section('content')
 <div class="container-fluid">
     
-    {{-- DITAMBAHKAN: Filter berdasarkan ruangan untuk user experience yang lebih baik --}}
+    {{-- Filter berdasarkan ruangan --}}
     <div class="card shadow mb-4">
         <div class="card-body">
             <form action="{{ route('lengkongsari.ikl.index') }}" method="GET">
@@ -18,7 +18,7 @@
                         <select name="rkl_id" id="rkl_id_filter" class="form-control">
                             <option value="">Tampilkan Semua</option>
                             @foreach ($rkls as $rkl)
-                                {{-- Gunakan request()->get('rkl_id') untuk mempertahankan filter yang dipilih --}}
+                                {{-- Gunakan request()->get('rkl_id') untuk mempertahankan filter --}}
                                 <option value="{{ $rkl->id }}" {{ request()->get('rkl_id') == $rkl->id ? 'selected' : '' }}>
                                     {{ $rkl->name }}
                                 </option>
@@ -38,8 +38,9 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h4 class="m-0 font-weight-bold text-primary">Data IKL {{ $selectedRkl->name ?? '' }} - Kel. Lengkongsari</h4>
                 <div>
+                    {{-- Pastikan semua route helper sudah benar --}}
                     <a href="{{ route('lengkongsari.ikl.print', request()->query()) }}" class="btn btn-danger btn-icon-split btn-sm">
-                        <span class="icon text-white-50"><i class="fas fa-file-pdf"></i></span>
+                        <span class="icon text-white-50"><i class="fas fa-file-print"></i></span>
                         <span class="text">Export PDF</span>
                     </a>
                     <a href="{{ route('lengkongsari.ikl.create') }}" class="btn btn-primary btn-icon-split btn-sm">
@@ -51,7 +52,6 @@
         </div>
         <div class="card-body">
             
-            {{-- DITAMBAHKAN: Menampilkan pesan sukses setelah operasi CRUD --}}
             @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
@@ -61,7 +61,7 @@
                     <thead class="text-center" style="background-color: #f2f2f2;">
                         <tr>
                             <th rowspan="2" class="align-middle">No Urut</th>
-                            <th rowspan="2" class="align-middle">Nama Barang / Jenis Barang</th>
+                            <th rowspan="2" class="align-middle">Nama Barang</th>
                             <th rowspan="2" class="align-middle">Merk / Model</th>
                             <th rowspan="2" class="align-middle">Bahan</th>
                             <th rowspan="2" class="align-middle">Tahun Pembelian</th>
@@ -79,7 +79,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{-- DIPERBAIKI: Variabel disesuaikan menjadi $ikls dan $ikl agar cocok dengan Controller --}}
                         @forelse ($ikls as $ikl)
                             <tr>
                                 <td class="text-center">{{ $loop->iteration }}</td>
@@ -154,7 +153,7 @@
                     <p>Dari ruangan: <strong id="currentRkl"></strong></p>
                     <div class="form-group">
                         <label for="new_rkl_id">Pindahkan ke Ruangan:</label>
-                        <select class="form-control" id="new_rkl_id" name="new_rkl_id" required>
+                        <select class="form-control" name="new_rkl_id" required>
                             <option value="">-- Pilih Ruangan Tujuan --</option>
                             @foreach ($rkls as $rkl)
                                 <option value="{{ $rkl->id }}">{{ $rkl->name }}</option>
@@ -175,20 +174,26 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    $('.move-item-btn').on('click', function() {
-        const itemId = $(this).data('id');
-        const itemName = $(this).data('name');
-        const currentRkl = $(this).data('rkl');
+    // Script ini akan berjalan setiap kali modal #moveItemModal akan ditampilkan
+    $('#moveItemModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget); // Tombol yang diklik
+
+        // Ambil data dari atribut data-* di tombol
+        var itemId = button.data('id');
+        var itemName = button.data('name');
+        var currentRkl = button.data('rkl');
         
-        // DIPERBAIKI: Ini adalah perbaikan bug paling penting.
-        // URL sekarang dibuat menggunakan nama route Laravel yang benar,
-        // sehingga akan selalu benar meskipun ada perubahan struktur URL.
+        // Buat URL Template dengan route helper Laravel. Ini cara paling aman.
         let formAction = "{{ route('lengkongsari.ikl.move', ['ikl' => ':id']) }}";
+        // Ganti placeholder :id dengan ID barang yang sebenarnya
         formAction = formAction.replace(':id', itemId);
         
-        $('#moveItemForm').attr('action', formAction);
-        $('#itemName').text(itemName);
-        $('#currentRkl').text(currentRkl);
+        var modal = $(this);
+
+        // Update konten di dalam modal
+        modal.find('#moveItemForm').attr('action', formAction);
+        modal.find('#itemName').text(itemName);
+        modal.find('#currentRkl').text(currentRkl);
     });
 });
 </script>

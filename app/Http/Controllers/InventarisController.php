@@ -10,20 +10,17 @@ use PDF;
 class InventarisController extends Controller
 {
     /**
-     * Menampilkan daftar item inventaris sesuai lokasi (Tawang/Lengkongsari).
+     * Menampilkan daftar item inventaris sesuai lokasi.
      */
     public function index(Request $request)
     {
-        // DIUBAH: Tentukan lokasi berdasarkan URL yang diakses
-        $lokasi = $request->is('lengkongsari/*') ? 'lengkongsari' : 'tawang';
-
-        // DIUBAH: Ambil ruangan HANYA dari lokasi yang sesuai untuk dropdown filter
+        $lokasi = 'tawang';
         $rooms = Room::where('lokasi', $lokasi)->orderBy('name')->get();
         
-        // DIUBAH: Mulai query inventaris HANYA dari lokasi yang sesuai
-        $query = Inventaris::with('room')->where('lokasi', $lokasi);
+        $query = Inventaris::with('room')->whereHas('room', function ($q) use ($lokasi) {
+            $q->where('lokasi', $lokasi);
+        });
 
-        // Logika filter ruangan Anda tetap sama dan berfungsi baik
         if ($request->has('room_id') && $request->room_id != '') {
             $query->where('room_id', $request->room_id);
         }
@@ -31,32 +28,25 @@ class InventarisController extends Controller
         $inventaris = $query->latest()->get();
         $selectedRoom = Room::find($request->room_id);
 
-        return view('pages.inventaris.index', [
-            'inventaris' => $inventaris,
-            'rooms' => $rooms,
-            'selectedRoom' => $selectedRoom,
-        ]);
+        return view('pages.inventaris.index', compact('inventaris', 'rooms', 'selectedRoom'));
     }
 
     /**
-     * Menampilkan form untuk membuat barang baru sesuai lokasi.
+     * Menampilkan form untuk membuat barang baru.
      */
-    public function create(Request $request)
+    public function create()
     {
-        // DIUBAH: Tentukan lokasi dan ambil ruangan yang sesuai saja
-        $lokasi = $request->is('lengkongsari/*') ? 'lengkongsari' : 'tawang';
+        $lokasi = 'tawang';
         $rooms = Room::where('lokasi', $lokasi)->orderBy('name')->get();
-        
-        // DIUBAH: Kirim variabel $lokasi ke view untuk digunakan di hidden input form
-        return view('pages.inventaris.create', compact('rooms', 'lokasi'));
+        return view('pages.inventaris.create', compact('rooms'));
     }
 
     /**
-     * Menyimpan data barang baru ke database dengan penanda lokasi.
+     * Menyimpan data barang baru ke database.
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'room_id' => 'required|exists:rooms,id',
             'kode_barang' => 'required|string|unique:inventaris,kode_barang',
@@ -64,97 +54,85 @@ class InventarisController extends Controller
             'jumlah' => 'required|integer|min:1',
             'harga_perolehan' => 'required|numeric',
             'kondisi' => 'required|in:B,KB,RB',
-            'lokasi' => 'required|in:tawang,lengkongsari', // DIUBAH: Tambahkan validasi untuk lokasi
+            'merk_model' => 'nullable|string|max:255',
+            'bahan' => 'nullable|string|max:255',
+            'keterangan' => 'nullable|string',
         ]);
-
-        Inventaris::create($request->all());
-
-        // DIUBAH: Redirect ke halaman yang benar sesuai lokasi
-        $redirectRoute = $request->lokasi == 'lengkongsari' ? 'lengkongsari.inventaris.index' : 'inventaris.index';
-
-        return redirect()->route($redirectRoute)
+        
+        Inventaris::create($validatedData);
+        
+        return redirect()->route('tawang.inventaris.index', ['room_id' => $request->room_id])
                          ->with('success', 'Barang baru berhasil ditambahkan.');
     }
 
     /**
      * Menampilkan form untuk mengedit data barang.
      */
-    public function edit($id)
+    public function edit(Inventaris $inventaris)
     {
-        $item = Inventaris::findOrFail($id);
-
-        // DIUBAH: Ambil ruangan HANYA dari lokasi barang yang sedang diedit
-        $rooms = Room::where('lokasi', $item->lokasi)->orderBy('name')->get();
-        
-        return view('pages.inventaris.edit', compact('item', 'rooms'));
+        $rooms = Room::where('lokasi', 'tawang')->orderBy('name')->get();
+        return view('pages.inventaris.edit', compact('inventaris', 'rooms'));
     }
 
     /**
      * Memperbarui data barang di database.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Inventaris $inventaris)
     {
-        $item = Inventaris::findOrFail($id);
-
-        $request->validate([
+        $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'room_id' => 'required|exists:rooms,id',
-            'kode_barang' => 'required|string|unique:inventaris,kode_barang,' . $item->id,
+            'kode_barang' => 'required|string|unique:inventaris,kode_barang,' . $inventaris->id,
             'tahun_pembelian' => 'required|numeric|digits:4',
             'jumlah' => 'required|integer|min:1',
             'harga_perolehan' => 'required|numeric',
             'kondisi' => 'required|in:B,KB,RB',
+            'merk_model' => 'nullable|string|max:255',
+            'bahan' => 'nullable|string|max:255',
+            'keterangan' => 'nullable|string',
         ]);
 
-        $item->update($request->all());
-        
-        // DIUBAH: Redirect ke halaman yang benar sesuai lokasi barang yang diupdate
-        $redirectRoute = $item->lokasi == 'lengkongsari' ? 'lengkongsari.inventaris.index' : 'inventaris.index';
+        $inventaris->update($validatedData);
 
-        return redirect()->route($redirectRoute)
+        return redirect()->route('tawang.inventaris.index', ['room_id' => $inventaris->room_id])
                          ->with('success', 'Data barang berhasil diperbarui.');
     }
 
     /**
      * Menghapus data barang dari database.
      */
-    public function destroy($id)
+    public function destroy(Inventaris $inventaris)
     {
-        $item = Inventaris::findOrFail($id);
-        $lokasi = $item->lokasi; // DIUBAH: Simpan info lokasi sebelum item dihapus
-        $item->delete();
-
-        // DIUBAH: Redirect ke halaman yang benar
-        $redirectRoute = $lokasi == 'lengkongsari' ? 'lengkongsari.inventaris.index' : 'inventaris.index';
-
-        return redirect()->route($redirectRoute)
+        $roomId = $inventaris->room_id;
+        $inventaris->delete();
+        return redirect()->route('tawang.inventaris.index', ['room_id' => $roomId])
                          ->with('success', 'Barang berhasil dihapus.');
     }
 
     /**
-     * Memindahkan barang ke ruangan lain. (Tidak perlu diubah, sudah benar)
+     * Memindahkan barang ke ruangan lain.
      */
-    public function move(Request $request, $id)
+    public function move(Request $request, Inventaris $inventaris)
     {
         $request->validate([
             'new_room_id' => 'required|exists:rooms,id',
         ]);
 
-        $item = Inventaris::findOrFail($id);
-        $item->room_id = $request->new_room_id;
-        $item->save();
+        $inventaris->room_id = $request->new_room_id;
+        $inventaris->save();
 
-        return back()->with('success', 'Barang berhasil dipindahkan.');
+        return back()->with('success', 'Barang berhasil dipindahkan ke ruangan baru.');
     }
 
     /**
-     * Membuat laporan PDF sesuai lokasi.
+     * Membuat laporan PDF.
      */
     public function pdf(Request $request)
     {
-        // DIUBAH: Tentukan lokasi dan filter query utama
-        $lokasi = $request->is('lengkongsari/*') ? 'lengkongsari' : 'tawang';
-        $query = Inventaris::with('room')->where('lokasi', $lokasi);
+        $lokasi = 'tawang';
+        $query = Inventaris::with('room')->whereHas('room', function ($q) use ($lokasi) {
+            $q->where('lokasi', $lokasi);
+        });
 
         if ($request->has('room_id') && $request->room_id != '') {
             $query->where('room_id', $request->room_id);
@@ -164,18 +142,13 @@ class InventarisController extends Controller
         $selectedRoom = Room::find($request->room_id);
         $tanggalCetak = now()->translatedFormat('d F Y');
 
-        $pdf = PDF::loadView('pages.inventaris.pdf', [
-            'inventaris' => $inventaris,
-            'selectedRoom' => $selectedRoom,
-            'tanggalCetak' => $tanggalCetak,
-        ]);
+        // ======================================================
+        // PERBAIKAN: Mengubah 'pdf' menjadi 'print' agar cocok dengan nama file Anda.
+        // ======================================================
+        $pdf = PDF::loadView('pages.inventaris.print', compact('inventaris', 'selectedRoom', 'tanggalCetak'));
         
-        // DIUBAH: Tambahkan nama lokasi di nama file PDF agar lebih jelas
         $fileName = 'laporan-inventaris-' . $lokasi . '-' . date('Y-m-d') . '.pdf';
         return $pdf->download($fileName);
     }
-    
-    // Method show() tidak saya sertakan karena biasanya tidak perlu diubah,
-    // tapi jika Anda membutuhkannya, logikanya sama.
 }
 
